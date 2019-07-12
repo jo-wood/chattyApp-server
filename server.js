@@ -3,27 +3,21 @@ const express = require('express');
 const SocketServer = require('ws').Server;
 const uuid = require('uuid/v1');
 const  messages  = require('./message-db.js')
-// Set the port to 3001
 const PORT = 3001;
-// Create a new express server
 const server = express()
   // Make the express server serve static assets (html, javascript, css) from the /public folder
   .use(express.static('public'))
   .listen(PORT, '0.0.0.0', 'localhost', () => console.log(`Listening on ${PORT}`));
 // Create the WebSockets server
 const wss = new SocketServer({ server });
-// Set up a callback that will run when a client connects to the server
-// When a client connects they are assigned a socket, represented by
-// the ws parameter in the callback.
-
 const clients = [];
 const userColor = {};
 
+//* username color helper functions:
+
 function pickColor() {
   let colorOptions = ['#FF6F61', '#D69C2F', '#343148', '#7F4145', '#BD3D3A', '#766F57'];
-
   let optionLength = colorOptions.length;
-
   let pickRandom = Math.floor(Math.random() +1 ) * optionLength;
   let randomColor = colorOptions[pickRandom]
   return {randomColor};
@@ -41,72 +35,64 @@ function checkColor(username, currentUser){
   }
 }
 
+//* push posts to temporary db
 
 function addMessageToDb(newPost) {
-
-  const { newMessage } = newPost;
-  if (newMessage) {
-    messages.push(newPost.newMessage);
+  const { newMessage, nameNotify  } = newPost;
+  if (nameNotify) {
+    messages.push(nameNotify);
+    wss.broadcast({
+      nameNotify
+    });
+  } else {
+    messages.push(newMessage);
     wss.broadcast({
       newMessage
     });
-  } else {
-    messages.push(newPost.nameNotify);
-    const { nameNotify } = newPost;
-    wss.broadcast({ nameNotify });
   }
 }
 
 SocketServer.prototype.broadcast = (msg) => {
-
   clients.map((c) => {
     c.send(JSON.stringify(msg));
   });
 }
 
-
 wss.on('connection', (client) => {
-
   clients.push(client);
   wss.broadcast({ numberOfUsers: wss.clients.size});
-
-  // send an initial loading of messages 
+  // send an initial loading of messages for refresh per session
   wss.broadcast({ initialLoad: messages });
-
-console.log(messages)
+  // check which type of message client sending
   client.on('message', (msgData) => {
     const msg = JSON.parse(msgData);
     const nameChange = msg.nameNotify;
+    // if post is a notification of a name change:
     if (nameChange) {
-      let { oldName, currentUser } = nameChange;
-      addMessageToDb({ nameNotify: 
-        {oldName, currentUser, currentColor: checkColor(null, currentUser)}
+      const { oldName, currentUser } = nameChange;
+      addMessageToDb({ 
+        nameNotify: {
+          oldName, 
+          currentUser, 
+          currentColor: checkColor(null, currentUser)
+        }
       });
     } else {
+      // consider the post a newMessage
       const { username, content } = msg.newMsg;
       const { currentUser } = msg;
-
       const renderMessage = {
         username: username,
         content: content,
         messageId: uuid(),
         nameColor: checkColor(username, currentUser)
-
-
       };
       addMessageToDb({ newMessage: renderMessage});
     }
   }); 
 
-
-
   client.on('close', () => {
     wss.broadcast({ numberOfUsers: wss.clients.size });
     console.log('Client disconnected');
   });
-
 });
-
-
-
-

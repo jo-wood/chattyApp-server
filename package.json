@@ -1,0 +1,24 @@
+{
+  "name": "chatty_server",
+  "version": "1.0.0",
+  "description": "WS server for chattyApp",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/jo-wood/chattyApp.git%20.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jo-wood/chattyApp.git%20/issues"
+  },
+  "homepage": "https://github.com/jo-wood/chattyApp.git%20#readme",
+  "dependencies": {
+    "express": "4.17.1",
+    "uuid": "^3.3.2",
+    "ws": "7.0.1"
+  }
+}

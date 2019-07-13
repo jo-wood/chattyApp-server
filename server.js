@@ -17,20 +17,21 @@ const userColor = {};
 
 function pickColor() {
   let colorOptions = ['#FF6F61', '#D69C2F', '#343148', '#7F4145', '#BD3D3A', '#766F57'];
-  let optionLength = colorOptions.length;
-  let pickRandom = Math.floor(Math.random() +1 ) * optionLength;
-  let randomColor = colorOptions[pickRandom]
-  return {randomColor};
+  let max = colorOptions.length - 1;
+  let min = 0;
+  let pickRandom = Math.random() * (max - min) + min
+  let randomColor = colorOptions[Math.floor(pickRandom)]
+  return randomColor;
 }
 
-function checkColor(username, currentUser){
-  if (userColor.hasOwnProperty === username) {
-    return userColor[username];
-  } else if (userColor.hasOwnProperty === currentUser ){
-    return userColor[currentUser];
+function checkColor(user){
+  if (userColor[user]) {
+    console.log(user)
+    return userColor[user];
   } else {
     let clientSpecColor = pickColor();
-    userColor[currentUser] = clientSpecColor;
+    userColor[user] = clientSpecColor;
+    console.log(userColor)
     return clientSpecColor;
   }
 }
@@ -73,8 +74,7 @@ wss.on('connection', (client) => {
       addMessageToDb({ 
         nameNotify: {
           oldName, 
-          currentUser, 
-          currentColor: checkColor(null, currentUser)
+          currentUser
         }
       });
     } else {
@@ -85,7 +85,7 @@ wss.on('connection', (client) => {
         username: username,
         content: content,
         messageId: uuid(),
-        nameColor: checkColor(username, currentUser)
+        nameColor: checkColor(username)
       };
       addMessageToDb({ newMessage: renderMessage});
     }
